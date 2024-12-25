@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* 隐藏全局滚动条但保留滚动效果 */
+  html {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    @apply overflow-y-scroll;
+  }
+  
+  html::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  body {
+    @apply min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200;
+  }
+}
+
+@layer components {
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .card-container {
+    perspective: 1000px;
+    position: relative;
+    height: 800px;
+  }
+
+  .card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .card-front {
+    transform: rotateY(0) translateZ(0);
+  }
+  
+  .card-back {
+    transform: rotateY(180deg) translateZ(0);
+  }
+  
+  .card-container.flipped .card-front {
+    transform: rotateY(180deg) translateZ(0);
+  }
+  
+  .card-container.flipped .card-back {
+    transform: rotateY(360deg) translateZ(0);
+  }
+
+  /* 自定义滚动条样式 - 用于 JSON 预览区域 */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    display: block;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.3);
+    border-radius: 3px;
+  }
+
+  .dark .custom-scrollbar {
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  }
+
+  .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.5);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 自定义 Prism.js 主题覆盖 */
+code[class*="language-"],
+pre[class*="language-"] {
+  @apply text-gray-900 dark:text-gray-100;
+  background: none !important;
+  text-shadow: none !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  white-space: pre !important;
+  word-spacing: normal !important;
+  tab-size: 2 !important;
+}
+
+/* 移除所有 token 的背景色 */
+.token {
+  background: none !important;
+  text-shadow: none !important;
+}
+
+.token.property { 
+  @apply text-purple-600 dark:text-purple-400;
+}
+
+.token.string { 
+  @apply text-green-600 dark:text-green-400;
+}
+
+.token.number { 
+  @apply text-blue-600 dark:text-blue-400;
+}
+
+.token.boolean { 
+  @apply text-yellow-600 dark:text-yellow-400;
+}
+
+.token.null { 
+  @apply text-red-600 dark:text-red-400;
+}
+
+.token.punctuation,
+.token.operator { 
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+/* 确保代码块背景透明 */
+pre[class*="language-"] {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  overflow: visible;
+  overflow-x: auto;
+}
+
+/* 优化代码块样式 */
+pre[class*="language-"] {
+  @apply relative;
+}
+
+pre[class*="language-"]::after {
+  content: '';
+  @apply absolute inset-0 rounded-lg pointer-events-none;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dark pre[class*="language-"]::after {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* 代码编辑器装饰按钮悬停效果 */
+.dark .bg-red-400 { @apply hover:bg-red-300 transition-colors; }
+.dark .bg-yellow-400 { @apply hover:bg-yellow-300 transition-colors; }
+.dark .bg-green-400 { @apply hover:bg-green-300 transition-colors; }
+
+/* 自定义滚动条样式 */
+pre {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+}
+
+pre::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+pre::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 4px;
+}
+
+pre::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.5);
+}
