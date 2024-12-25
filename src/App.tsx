@@ -18,7 +18,6 @@ function App() {
     const fetchIPData = async () => {
       setLoading(true);
       try {
-        // 并行请求IPv4和IPv6数据
         const [v4Response, v6Response] = await Promise.allSettled([
           ipAPI.getCurrentIPv4(),
           ipAPI.getCurrentIPv6(),
@@ -34,12 +33,17 @@ function App() {
           setIpv6Data(v6Response.value);
         }
 
-        // 如果只有IPv6可用，自动切换到IPv6标签
+        // 根据可用的网络类型设置 activeTab
         if (
           v4Response.status === "rejected" &&
           v6Response.status === "fulfilled"
         ) {
           setActiveTab("ipv6");
+        } else if (
+          v4Response.status === "fulfilled" &&
+          v6Response.status === "rejected"
+        ) {
+          setActiveTab("ipv4");
         }
       } catch (error) {
         console.error("获取IP信息失败:", error);
@@ -86,16 +90,15 @@ function App() {
       <div className="relative container mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2 max-w-7xl mx-auto">
           <div className="flex flex-wrap gap-2 justify-between items-center">
-            {/* 只有当两种IP类型都可用时才显示切换器 */}
-            {ipv4Data && ipv6Data ? (
+            {loading ? (
+              <div className="px-4 sm:px-8 py-3 rounded-lg font-medium text-gray-700 dark:text-gray-300">
+                正在检测网络...
+              </div>
+            ) : ipv4Data && ipv6Data ? (
               <TabSelector activeTab={activeTab} onTabChange={setActiveTab} />
             ) : (
-              <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                {ipv4Data
-                  ? "IPv4网络"
-                  : ipv6Data
-                  ? "IPv6网络"
-                  : "正在检测网络..."}
+              <div className="px-4 sm:px-8 py-3 rounded-lg font-medium text-gray-700 dark:text-gray-300">
+                {ipv4Data ? "IPv4网络" : ipv6Data ? "IPv6网络" : "网络检测失败"}
               </div>
             )}
             <ThemeToggle isDark={isDark} onToggle={toggleDarkMode} />
@@ -108,13 +111,15 @@ function App() {
           </div>
         ) : (
           <>
-            {activeTab === "ipv4" && ipv4Data ? (
+            {ipv4Data && activeTab === "ipv4" && (
               <IPCard data={convertToIPInfo(ipv4Data, "ipv4")} />
-            ) : activeTab === "ipv6" && ipv6Data ? (
+            )}
+            {ipv6Data && activeTab === "ipv6" && (
               <IPCard data={convertToIPInfo(ipv6Data, "ipv6")} />
-            ) : (
+            )}
+            {!ipv4Data && !ipv6Data && (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                当前网络不支持 {activeTab === "ipv4" ? "IPv4" : "IPv6"}
+                未检测到可用网络
               </div>
             )}
           </>
