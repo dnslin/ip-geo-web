@@ -1,15 +1,83 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IPCard } from "./components/IPCard";
 import { TabSelector } from "./components/TabSelector";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { useTheme } from "./hooks/useTheme";
-import { TabType } from "./types/ip";
-import { ipv4Data, ipv6Data } from "./data/mockData";
+import { TabType, IPResponse } from "./types/ip";
+import { ipAPI } from "./services/api";
 import "./App.css";
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>("ipv4");
   const { isDark, toggleDarkMode } = useTheme();
+  const [loading, setLoading] = useState(true);
+  const [ipv4Data, setIpv4Data] = useState<IPResponse | null>(null);
+  const [ipv6Data, setIpv6Data] = useState<IPResponse | null>(null);
+
+  useEffect(() => {
+    const fetchIPData = async () => {
+      setLoading(true);
+      try {
+        // 并行请求IPv4和IPv6数据
+        const [v4Response, v6Response] = await Promise.allSettled([
+          ipAPI.getCurrentIPv4(),
+          ipAPI.getCurrentIPv6(),
+        ]);
+
+        // 处理IPv4响应
+        if (v4Response.status === "fulfilled") {
+          setIpv4Data(v4Response.value);
+        }
+
+        // 处理IPv6响应
+        if (v6Response.status === "fulfilled") {
+          setIpv6Data(v6Response.value);
+        }
+
+        // 如果只有IPv6可用，自动切换到IPv6标签
+        if (
+          v4Response.status === "rejected" &&
+          v6Response.status === "fulfilled"
+        ) {
+          setActiveTab("ipv6");
+        }
+      } catch (error) {
+        console.error("获取IP信息失败:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIPData();
+  }, []);
+
+  // 转换IPResponse为IPInfo
+  const convertToIPInfo = (data: IPResponse, type: TabType) => {
+    return {
+      address: data.ip,
+      type,
+      flag: `https://dl.wjy.me/flags/${data.location.country.code.toLowerCase()}.svg`,
+      organization: `${data.isp.name} · ${data.network.type}`,
+      location: {
+        continent: `${data.location.continent.name} (${data.location.continent.code})`,
+        country: `${data.location.country.name} (${data.location.country.code})`,
+        province: data.location.region.name,
+        city: data.location.city.name,
+        longitude: String(data.location.location.longitude),
+        latitude: String(data.location.location.latitude),
+        timezone: data.location.location.timezone,
+      },
+      network: {
+        asn: String(data.asn.number),
+        asnName: data.asn.name,
+        isp: data.isp.name,
+        cidr: data.network.cidr,
+        startIP: data.network.start_ip,
+        endIP: data.network.end_ip,
+        totalIPs: String(data.network.total_ips),
+      },
+    };
+  };
 
   return (
     <>
@@ -18,15 +86,38 @@ function App() {
       <div className="relative container mx-auto max-w-7xl px-4 sm:px-6 py-6 space-y-6">
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2 max-w-7xl mx-auto">
           <div className="flex flex-wrap gap-2 justify-between items-center">
-            <TabSelector activeTab={activeTab} onTabChange={setActiveTab} />
+            {/* 只有当两种IP类型都可用时才显示切换器 */}
+            {ipv4Data && ipv6Data ? (
+              <TabSelector activeTab={activeTab} onTabChange={setActiveTab} />
+            ) : (
+              <div className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                {ipv4Data
+                  ? "IPv4网络"
+                  : ipv6Data
+                  ? "IPv6网络"
+                  : "正在检测网络..."}
+              </div>
+            )}
             <ThemeToggle isDark={isDark} onToggle={toggleDarkMode} />
           </div>
         </div>
 
-        {activeTab === "ipv4" ? (
-          <IPCard data={ipv4Data} />
+        {loading ? (
+          <div className="flex justify-center items-center min-h-[200px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+          </div>
         ) : (
-          <IPCard data={ipv6Data} />
+          <>
+            {activeTab === "ipv4" && ipv4Data ? (
+              <IPCard data={convertToIPInfo(ipv4Data, "ipv4")} />
+            ) : activeTab === "ipv6" && ipv6Data ? (
+              <IPCard data={convertToIPInfo(ipv6Data, "ipv6")} />
+            ) : (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                当前网络不支持 {activeTab === "ipv4" ? "IPv4" : "IPv6"}
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
