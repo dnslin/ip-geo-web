@@ -69,7 +69,7 @@ export function IPCard({ data }: { data: IPInfo }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h1
-                    className="text-xl sm:text-2xl font-semibold mb-2 truncate cursor-pointer hover:text-blue-500 transition-colors"
+                    className="text-xl sm:text-2xl font-semibold mb-2 truncate cursor-pointer hover:text-blue-500 transition-colors text-center sm:text-left"
                     onClick={() => copyToClipboard(data.address)}
                     title="点击复制IP地址"
                   >
